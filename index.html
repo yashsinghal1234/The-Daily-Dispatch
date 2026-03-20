@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Daily Dispatch</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=UnifrakturMaguntia&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ── MASTHEAD ── -->
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="masthead-meta left">
+        <span id="today-date"></span>
+        <span class="separator">·</span>
+        <span id="user-location">Detecting location…</span>
+      </div>
+      <div class="masthead-logo">
+        <h1 class="paper-name">The Daily Dispatch</h1>
+        <p class="paper-tagline">Truth. Clarity. Perspective.</p>
+      </div>
+      <div class="masthead-meta right">
+        <span>Est. 2025</span>
+        <span class="separator">·</span>
+        <span>Vol. I</span>
+      </div>
+    </div>
+
+    <div class="masthead-rule"></div>
+
+    <!-- Controls — location only -->
+    <nav class="controls-bar">
+      <div class="controls-inner">
+        <select id="country" title="Select country">
+          <option value="auto">📍 Auto-detect</option>
+          <option value="all">🌐 Worldwide</option>
+          <option value="us">🇺🇸 USA</option>
+          <option value="in">🇮🇳 India</option>
+          <option value="gb">🇬🇧 UK</option>
+          <option value="au">🇦🇺 Australia</option>
+          <option value="ca">🇨🇦 Canada</option>
+          <option value="fr">🇫🇷 France</option>
+          <option value="de">🇩🇪 Germany</option>
+          <option value="it">🇮🇹 Italy</option>
+          <option value="es">🇪🇸 Spain</option>
+          <option value="jp">🇯🇵 Japan</option>
+          <option value="kr">🇰🇷 South Korea</option>
+          <option value="cn">🇨🇳 China</option>
+          <option value="ru">🇷🇺 Russia</option>
+          <option value="br">🇧🇷 Brazil</option>
+          <option value="mx">🇲🇽 Mexico</option>
+          <option value="za">🇿🇦 South Africa</option>
+          <option value="ae">🇦🇪 UAE</option>
+          <option value="ng">🇳🇬 Nigeria</option>
+          <option value="sg">🇸🇬 Singapore</option>
+          <option value="id">🇮🇩 Indonesia</option>
+        </select>
+        <button id="getnews">Load Headlines</button>
+      </div>
+    </nav>
+
+    <div class="section-rule"></div>
+  </header>
+
+  <!-- Breaking ticker -->
+  <div class="ticker-wrap" id="ticker-wrap">
+    <span class="ticker-label">BREAKING</span>
+    <div id="ticker-track"></div>
+  </div>
+
+  <!-- Main -->
+  <main class="paper-body">
+    <div id="splash" class="splash">
+      <div class="splash-inner">
+        <div class="splash-icon">📰</div>
+        <h2>Select your region and click <em>Load Headlines</em></h2>
+        <p>Your personalised front page — delivered instantly.</p>
+      </div>
+    </div>
+
+    <div id="skeleton" class="skeleton-grid" style="display:none">
+      <div class="skel skel-hero"></div>
+      <div class="skel skel-side"></div>
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+    </div>
+
+    <div id="newslist"></div>
+  </main>
+
+  <footer class="paper-footer">
+    <div class="footer-rule"></div>
+    <p>© 2025 The Daily Dispatch &nbsp;·&nbsp; Powered by NewsAPI &nbsp;·&nbsp; <span id="footer-location"></span></p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
