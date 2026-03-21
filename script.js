@@ -1,6 +1,15 @@
 /* ===================================================
    THE DAILY DISPATCH — script.js
+   Calls your Vercel proxy instead of NewsAPI directly.
+   ★ Change PROXY_BASE to your deployed Vercel URL.
 =================================================== */
+
+// ──────────────────────────────────────────────────
+//  ★  Set this to your Vercel deployment URL
+//     e.g. "https://newsapi-proxy.vercel.app"
+//     Leave /api/news at the end as-is.
+// ──────────────────────────────────────────────────
+const PROXY_BASE = "https://news-api-proxy-navy.vercel.app/";
 
 const btn             = document.querySelector("#getnews");
 const countrySelector = document.querySelector("#country");
@@ -11,8 +20,6 @@ const tickerWrap      = document.querySelector("#ticker-wrap");
 const tickerTrack     = document.querySelector("#ticker-track");
 const locationEl      = document.querySelector("#user-location");
 const footerLocation  = document.querySelector("#footer-location");
-
-const API_KEY = "dc95b543f86c4736863d16c7b4236534";
 
 // ── Date ─────────────────────────────────────────
 const dateEl = document.querySelector("#today-date");
@@ -36,7 +43,7 @@ const TOP_HEADLINE_COUNTRIES = new Set([
   "us","gb","au","ca","in","de","fr","it","es","ru","br","mx","za","ae","sg","ng","id","jp","kr","cn"
 ]);
 
-// SVG icons (24x24, inline) — no emojis
+// SVG icons (24x24, inline)
 const ICONS = {
   globe:    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
   geo:      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
@@ -54,7 +61,6 @@ const ICONS = {
   pin:      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
 };
 
-// Sections with icon keys
 const SECTIONS = [
   { key:"geopolitical", label:"Geopolitical",          icon:"geo",       q:'geopolitics OR diplomacy OR "foreign policy" OR sanctions OR war OR "international relations"' },
   { key:"economy",      label:"Economy & Markets",     icon:"chart",     q:'economy OR inflation OR GDP OR "stock market" OR trade OR recession OR "central bank"' },
@@ -129,49 +135,50 @@ async function detectLocation() {
   loadNews();
 }
 
-// ── Fetch helpers ─────────────────────────────────
+// ── Fetch helpers — now via proxy ─────────────────
 function filterArticles(articles) {
   return (articles || []).filter(
     a => a.urlToImage && a.title && !a.title.includes("[Removed]") && a.description && a.url
   );
 }
 
-async function safeGet(url) {
+async function safeGet(params) {
   try {
-    const r = await fetch(url);
-    const d = await r.json();
+    const qs  = new URLSearchParams(params).toString();
+    const r   = await fetch(`${PROXY_BASE}?${qs}`);
+    const d   = await r.json();
     if (!r.ok) return [];
     return filterArticles(d.articles);
   } catch { return []; }
 }
 
 async function fetchTopHeadlines(country, pageSize = 12) {
-  const base  = "https://newsapi.org/v2";
-  const cname = countryNames[country] || country;
   if (country === "all") {
-    return safeGet(`${base}/everything?q=world+news&sortBy=publishedAt&pageSize=${pageSize}&language=en&apiKey=${API_KEY}`);
+    return safeGet({ endpoint:"everything", q:"world news", sortBy:"publishedAt", pageSize, language:"en" });
   }
   if (TOP_HEADLINE_COUNTRIES.has(country)) {
-    const primary = await safeGet(`${base}/top-headlines?country=${country}&pageSize=${pageSize}&apiKey=${API_KEY}`);
+    const primary = await safeGet({ endpoint:"top-headlines", country, pageSize });
     if (primary.length >= 4) return primary;
   }
-  return safeGet(`${base}/everything?q=${encodeURIComponent('"' + cname + '" news')}&sortBy=publishedAt&pageSize=${pageSize}&language=en&apiKey=${API_KEY}`);
+  const cname = countryNames[country] || country;
+  return safeGet({ endpoint:"everything", q:`"${cname}" news`, sortBy:"publishedAt", pageSize, language:"en" });
 }
 
-// Fetch section — two passes: with country scoping, then without if too few results
 async function fetchSection(country, sectionQ, pageSize = 20) {
-  const base  = "https://newsapi.org/v2";
-  const cname = country !== "all" ? countryNames[country] || "" : "";
+  const cname = country !== "all" ? (countryNames[country] || "") : "";
 
-  // Pass 1: country-scoped
   if (cname) {
-    const scopedQ = `(${sectionQ}) "${cname}"`;
-    const results = await safeGet(`${base}/everything?q=${encodeURIComponent(scopedQ)}&sortBy=publishedAt&pageSize=${pageSize}&language=en&apiKey=${API_KEY}`);
+    const results = await safeGet({
+      endpoint: "everything",
+      q: `(${sectionQ}) "${cname}"`,
+      sortBy: "publishedAt",
+      pageSize,
+      language: "en"
+    });
     if (results.length >= 4) return results;
   }
 
-  // Pass 2: global (no country restriction) — always has plenty
-  return safeGet(`${base}/everything?q=${encodeURIComponent(sectionQ)}&sortBy=publishedAt&pageSize=${pageSize}&language=en&apiKey=${API_KEY}`);
+  return safeGet({ endpoint:"everything", q: sectionQ, sortBy:"publishedAt", pageSize, language:"en" });
 }
 
 // ── HTML helpers ──────────────────────────────────
@@ -188,10 +195,9 @@ function iconSvg(key) {
   return `<span class="sec-icon">${ICONS[key] || ICONS.globe}</span>`;
 }
 
-// Hero: 1 large left + 2×2 right grid
 function buildHeroGrid(articles) {
   const main  = articles[0];
-  const sides = articles.slice(1, 5); // exactly 4 side cards
+  const sides = articles.slice(1, 5);
 
   const mainHtml = `
     <article class="hero-main">
@@ -296,13 +302,12 @@ async function renderAll(country) {
       </div>
       ${buildHeroGrid(headlines)}`;
 
-    // Fetch all 12 sections in parallel — each does its own country-scoped + global fallback
     const results = await Promise.all(
       SECTIONS.map(s => fetchSection(country, s.q, 20).then(arts => ({ ...s, arts })))
     );
 
     results.forEach(({ key, label, icon, arts }) => {
-      const fresh  = arts.filter(a => !shownUrls.has(a.url));
+      const fresh = arts.filter(a => !shownUrls.has(a.url));
       fresh.forEach(a => shownUrls.add(a.url));
       newslist.innerHTML += renderSectionBlock(key, label, icon, fresh.slice(0, 10));
     });
